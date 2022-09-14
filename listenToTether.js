@@ -20,19 +20,21 @@ async function ethereum() {
 
 async function bnbchain() {
   const usdtContractAddress = process.env.USDT_BEP20_TOKEN_CONTRACT;
-  const provider =await  new ethers.providers.WebSocketProvider(`${process.env.GETBLOCK_WEBSOCKET_URL}${process.env.GETBLOCK_API_KEY}`);
-  console.log(`${process.env.GETBLOCK_WEBSOCKET_URL}${process.env.GETBLOCK_API_KEY}`)
+  const provider =await  new ethers.providers.WebSocketProvider(`${process.env.CHAINSTACK_WEBSOCKET_URL}${process.env.CHAINSTACK_API_KEY}`);
   const contract = await new ethers.Contract(usdtContractAddress, usdtABI, provider);
-  await contract.on("Transfer", (from, to, value, event) => {
+  try {
+    await contract.on("Transfer", (from, to, value, event) => {
     let info = {
       from: from,
       to: to,
       value: ethers.utils.formatUnits(value, 18),   // только для юсдт на эфире, для бнб беп здесь будет 18
       data: event
     };
-    console.log('jghcgh')
     console.log(JSON.stringify(info, null, 4))
   })
+  } catch (e) {
+    console.log(e)
+  }
 }
 
 // ethereum();
