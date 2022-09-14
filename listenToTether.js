@@ -5,33 +5,40 @@ require('dotenv').config();
 let mongoUrl = process.env.MONGO_URL;
 console.log(mongoUrl)
 let documentCount = 0;
+let db, client;
+(
+    async () => {
+        client = await MongoClient.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
+        db = client.db('usdt');
+    }
+)()
+
 async function ethereum() {
   //const usdtAddress = '0xdAC17F958D2ee523a2206206994597C13D831ec7';
   const usdtContractAddress = process.env.USDT_ERC20_TOKEN_CONTRACT;
   const provider = new ethers.providers.WebSocketProvider(`${process.env.ALCHEMY_WEBSOCKET_URL}${process.env.ALCHEMY_API_KEY}`);
   const contract = new ethers.Contract(usdtContractAddress, usdtABI, provider);
-  contract.on("Transfer", (from, to, value, event) => {
-    let info = {
-      from: from,
-      to: to,
-      value: ethers.utils.formatUnits(value, 6),   // только для юсдт на эфире, для бнб беп здесь будет 18
-      data: event
-    };
-    console.log(JSON.stringify(info, null, 4))
-  })
+  let tx
+  let txData;
+  try {
+    await contract.on("Transfer", (from, to, value, event) => {
+      let tx = {
+        from: from,
+        to: to,
+        value: ethers.utils.formatUnits(value, 6),   // только для юсдт на эфире, для бнб беп здесь будет 18
+        data: event
+      };
+      txData = JSON.stringify(tx, null, 4)
+      insertDocumentUSDTERC20(tx)
+    })
+  } catch (e) {
+      console.log(e)
+  }
 }
-      let db, client;
 
-(
-    async () => {
-      client = await MongoClient.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
-      db = client.db('usdt');
-    }
-)()
+
 
 async function bnbchain() {
-  let db;
-  let client = await MongoClient.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
   const usdtContractAddress = process.env.USDT_BEP20_TOKEN_CONTRACT;
   const provider =await  new ethers.providers.WebSocketProvider(`${process.env.CHAINSTACK_WEBSOCKET_URL}${process.env.CHAINSTACK_API_KEY}`);
   const contract = await new ethers.Contract(usdtContractAddress, usdtABI, provider);
@@ -46,32 +53,38 @@ async function bnbchain() {
       data: event
     };
     txData = JSON.stringify(tx, null, 4)
-    insertDocument(tx)
+    insertDocumentBUSD(tx)
     })
   } catch (e) {
     console.log(e)
   }
 }
 
-async function insertDocument(txData) {
+async function insertDocumentBUSD(txData) {
     try {
-      await db.collection('transactions').insertOne(txData, function(err, result) {
+      await db.collection('busdTransactions').insertOne(txData, function(err, result) {
           if (err) throw err;
-          console.log(documentCount+=1 ,"document inserted at ", new Date());
+          console.log(documentCount+=1 ,"BUSD document inserted at ", new Date());
       })
     } catch (e) {
         console.log(e)
     }
 }
 
+async function insertDocumentUSDTERC20(txData) {
+    try {
+        await db.collection('USDTERC20Transactions').insertOne(txData, function(err, result) {
+            if (err) throw err;
+            console.log(documentCount+=1 ,"USDT document inserted at ", new Date());
+        })
+    } catch (e) {
+        console.log(e)
+    }
+}
 
-// ethereum();
+
+ethereum();
 bnbchain()
-//
-// client.close();
-// console.log("Connection closed!");
-
-
 
 
 
