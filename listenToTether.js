@@ -2,7 +2,7 @@ const ethers = require('ethers');
 const usdtABI = require('./usdtABI.json');
 const MongoClient = require('mongodb').MongoClient
 require('dotenv').config();
-let mongoUrl = process.env.MONGO_ATLAS_URL;
+let mongoUrl = process.env.MONGO_LOCAL_URL;
 console.log(mongoUrl)
 let documentCount = 0;
 let db, client;
