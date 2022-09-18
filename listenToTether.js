@@ -6,6 +6,7 @@ let mongoUrl = process.env.MONGO_LOCAL_URL;
 console.log(mongoUrl)
 let documentCount = 0;
 let db, client;
+
 (
     async () => {
         client = await MongoClient.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
